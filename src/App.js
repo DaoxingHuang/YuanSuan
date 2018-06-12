@@ -5,10 +5,18 @@ import gapi from 'gapi-client';
 import logo from './logo.svg';
 import './App.css';
 import GoogleLogin from 'react-google-login';
-import Login from './Login'
-
+import Login from './Login';
+import fetchJsonp from 'fetch-jsonp'
 class App extends Component {
 
+    constructor() {
+        super();
+        this.singinRef = React.createRef();
+      }
+    //AIzaSyAqT8wb3zioCk5FZ98lPwc0t4vbjB0ulSg
+    //125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com
+    //8Fv-n3K97EBvmHDxGROgLdnG
+    //ap[i key :AIzaSyD84HhDX3c1puWGieAqdklTvxOWpEQtd_c
     setupCalendar = (calendar)=>{
         calendar.fullCalendar({
             editable: true,
@@ -36,88 +44,60 @@ class App extends Component {
 //            }
           }
 
-   initClient=()=> {
-            gapi.client.init({
-              apiKey: "AIzaSyDOZI9XNJ4m4tROutyr76IEJPN5UBSMEy8",
-              clientId: "557876893153-26b6pco279r8fpc0pv0tgu59ehasov9p.apps.googleusercontent.com",
-              discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
-              scope: "https://www.googleapis.com/auth/calendar.readonly"
-            }).then(function () {
-              // Listen for sign-in state changes.
-              gapi.auth2.getAuthInstance().isSignedIn.listen(this.updateSigninStatus);
+         handleAuthClick=(event)=> {
+                  gapi.auth2.getAuthInstance().signIn();
+                }
+  initClient= ()=> {
+    // Retrieve the discovery document for version 3 of Google Drive API.
+    // In practice, your app can retrieve one or more discovery documents.
+    var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
-              // Handle the initial sign-in state.
-              this.updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-              //authorizeButton.onclick = handleAuthClick;
-              //signoutButton.onclick = handleSignoutClick;
-            });
-          }
+    // Initialize the gapi.client object, which app uses to make API requests.
+    // Get API key and client ID from API Console.
+    // 'scope' field specifies space-delimited list of access scopes.
+
+    gapi.client.init({
+        'apiKey': 'AIzaSyD84HhDX3c1puWGieAqdklTvxOWpEQtd_c',
+        'discoveryDocs': [discoveryUrl],
+        'clientId': '125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com',
+        'scope': discoveryUrl
+    }).then(function () {
+     let  GoogleAuth = gapi.auth2.getAuthInstance();
+
+      // Listen for sign-in state changes.
+     // GoogleAuth.isSignedIn.listen(updateSigninStatus);
+
+      // Handle initial sign-in state. (Determine if user is already signed in.)
+      var user = GoogleAuth.currentUser.get();
+      //setSigninStatus();
+
+      // Call handleAuthClick function when user clicks on
+      //      "Sign In/Authorize" button.
+      $('#sign-in-or-out-button').click(function() {
+        this.handleAuthClick();
+      });
+      $('#revoke-access-button').click(function() {
+       // revokeAccess();
+      });
+    });
+  }
 
     start = ()=>{
-     gapi.load('client:auth2', this.initClient);
+    fetchJsonp('https://apis.google.com/_/scs/apps-static/_/js/k=oz.gapi.en.WcpMzqgmJZU.O/m=auth2,client/rt=j/sv=1/d=1/ed=1/am=AQ/rs=AGLTcCNsTS1p4dx0iMhlrwEpiaXw4iMjOg/cb=gapi.loaded_0', {
+        timeout: 3000,
+      })
+      .then(function(response) {
+        return response.json()
+      }).then(function(json) {
+        console.log('parsed json', json)
+      }).catch(function(ex) {
+        console.log('parsing failed', ex)
+      });
+//    /fetchJsonp();
+//https://apis.google.com/_/scs/apps-static/_/js/k=oz.gapi.en.WcpMzqgmJZU.O/m=auth2,client/rt=j/sv=1/d=1/ed=1/am=AQ/rs=AGLTcCNsTS1p4dx0iMhlrwEpiaXw4iMjOg/cb=gapi.loaded_0
+        gapi.load('client:auth2', this.initClient);
         };
 
-
-    //557876893153-26b6pco279r8fpc0pv0tgu59ehasov9p.apps.googleusercontent.com
-    //MnOUh_eWTVk1h1aBiAqP23hc
-
-//     authorize=(credentials, callback)=> {
-//          const {client_secret, client_id, redirect_uris} = credentials.installed;
-//          // generate a url that asks permissions for Google+ and Google Calendar scopes
-//          const scopes = [
-//            'https://www.googleapis.com/auth/calendar'
-//          ];
-//
-//        const url = oauth2Client.generateAuthUrl({
-//            // 'online' (default) or 'offline' (gets refresh_token)
-//            access_type: 'offline',
-//
-//            // If you only need one scope you can pass it as a string
-//            scope: scopes
-//          });
-//
-//      const oauth2Client = new google.auth.OAuth2(
-//        client_id,
-//        client_secret,
-//        url
-//      );
-//
-//      let code = 123;
-//      const token =  oauth2Client.getToken(code);
-//
-//      oauth2Client.setCredentials(JSON.parse(token));
-//      callback(oauth2Client);
-//    }
-
-//    getAccessToken=(oAuth2Client, callback)=> {
-//      const authUrl = oAuth2Client.generateAuthUrl({
-//        access_type: 'offline',
-//        scope: [
-//                 'https://www.googleapis.com/auth/plus.me',
-//                 'https://www.googleapis.com/auth/calendar'
-//               ],
-//      });
-//      console.log('Authorize this app by visiting this url:', authUrl);
-//      const rl = readline.createInterface({
-//        input: process.stdin,
-//        output: process.stdout,
-//      });
-//      rl.question('Enter the code from that page here: ', (code) => {
-//        rl.close();
-//        oAuth2Client.getToken(code, (err, token) => {
-//          if (err) return callback(err);
-//          oAuth2Client.setCredentials(token);
-//          // Store the token to disk for later program executions
-//          try {
-//            fs.writeFileSync(TOKEN_PATH, JSON.stringify(token));
-//            console.log('Token stored to', TOKEN_PATH);
-//          } catch (err) {
-//            console.error(err);
-//          }
-//          callback(oAuth2Client);
-//        });
-//      });
-//    }
 
   responseGoogle = (response) => {
       console.log(response);
@@ -128,7 +108,8 @@ class App extends Component {
 
     return (
       <div>
-       <Login/>
+
+
         <div className="calendar jquery-calendar">
       </div>
 
@@ -137,7 +118,7 @@ class App extends Component {
   }
 
    componentDidMount() {
-         // this.start();
+          this.start();
           this.setupCalendar($('.jquery-calendar'));
    }
 
