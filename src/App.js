@@ -6,13 +6,28 @@ import logo from './logo.svg';
 import './App.css';
 import GoogleLogin from 'react-google-login';
 import Login from './Login';
-import fetchJsonp from 'fetch-jsonp'
+import {fetchJsonp} from 'fetch-jsonp'
 class App extends Component {
+
+
+
 
     constructor() {
         super();
         this.singinRef = React.createRef();
       }
+
+        loadGApi() {
+          const script = document.createElement("script");
+          script.src = "https://apis.google.com/js/client.js";
+
+          script.onload = () => {
+           this.start();
+          };
+
+          document.body.appendChild(script);
+        }
+
     //AIzaSyAqT8wb3zioCk5FZ98lPwc0t4vbjB0ulSg
     //125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com
     //8Fv-n3K97EBvmHDxGROgLdnG
@@ -45,7 +60,8 @@ class App extends Component {
           }
 
          handleAuthClick=(event)=> {
-                  gapi.auth2.getAuthInstance().signIn();
+                 this.start();
+
                 }
   initClient= ()=> {
     // Retrieve the discovery document for version 3 of Google Drive API.
@@ -63,7 +79,13 @@ class App extends Component {
         'scope': discoveryUrl
     }).then(function () {
      let  GoogleAuth = gapi.auth2.getAuthInstance();
-
+       if (GoogleAuth.isSignedIn.get()) {
+            // User is authorized and has clicked 'Sign out' button.
+            GoogleAuth.signOut();
+          } else {
+            // User is not signed in. Start Google auth flow.
+            GoogleAuth.signIn();
+          }
       // Listen for sign-in state changes.
      // GoogleAuth.isSignedIn.listen(updateSigninStatus);
 
@@ -83,32 +105,27 @@ class App extends Component {
   }
 
     start = ()=>{
-    fetchJsonp('https://apis.google.com/_/scs/apps-static/_/js/k=oz.gapi.en.WcpMzqgmJZU.O/m=auth2,client/rt=j/sv=1/d=1/ed=1/am=AQ/rs=AGLTcCNsTS1p4dx0iMhlrwEpiaXw4iMjOg/cb=gapi.loaded_0', {
-        timeout: 3000,
-      })
-      .then(function(response) {
-        return response.json()
-      }).then(function(json) {
-        console.log('parsed json', json)
-      }).catch(function(ex) {
-        console.log('parsing failed', ex)
-      });
-//    /fetchJsonp();
-//https://apis.google.com/_/scs/apps-static/_/js/k=oz.gapi.en.WcpMzqgmJZU.O/m=auth2,client/rt=j/sv=1/d=1/ed=1/am=AQ/rs=AGLTcCNsTS1p4dx0iMhlrwEpiaXw4iMjOg/cb=gapi.loaded_0
         gapi.load('client:auth2', this.initClient);
-        };
+       };
 
 
-  responseGoogle = (response) => {
-      console.log(response);
-    }
+      responseGoogle = (response) => {
+          console.log(response);
+        }
 
+     componentDidMount() {
+this.loadGApi();
+              this.setupCalendar($('.jquery-calendar'));
+       }
 
   render() {
 
     return (
       <div>
-
+        <button id="sign-in-or-out-button" onClick={this.handleAuthClick}
+                  >Sign In/Authorize</button>
+          <button id="revoke-access-button"
+                  >Revoke access</button>
 
         <div className="calendar jquery-calendar">
       </div>
@@ -117,10 +134,7 @@ class App extends Component {
     );
   }
 
-   componentDidMount() {
-          this.start();
-          this.setupCalendar($('.jquery-calendar'));
-   }
+
 
 
 }
