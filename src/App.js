@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import $ from 'jquery';
 import fullCalendar from 'fullcalendar';
 import gapi from 'gapi-client';
 import logo from './logo.svg';
@@ -17,16 +16,7 @@ class App extends Component {
         this.singinRef = React.createRef();
       }
 
-        loadGApi() {
-          const script = document.createElement("script");
-          script.src = "https://apis.google.com/js/client.js";
 
-          script.onload = () => {
-           this.start();
-          };
-
-          document.body.appendChild(script);
-        }
 
     //AIzaSyAqT8wb3zioCk5FZ98lPwc0t4vbjB0ulSg
     //125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com
@@ -55,14 +45,14 @@ class App extends Component {
 //              listUpcomingEvents();
 //            } else {
 //              authorizeButton.style.display = 'block';
-//              signoutButton.style.display = 'none';
 //            }
           }
 
-         handleAuthClick=(event)=> {
-                 this.start();
-
-                }
+         handleAuthClick() {
+                // Ideally the button should only show up after gapi.client.init finishes, so that this
+                // handler won't be called before OAuth is initialized.
+                gapi.auth2.getAuthInstance().signIn();
+              }
   initClient= ()=> {
     // Retrieve the discovery document for version 3 of Google Drive API.
     // In practice, your app can retrieve one or more discovery documents.
@@ -95,17 +85,14 @@ class App extends Component {
 
       // Call handleAuthClick function when user clicks on
       //      "Sign In/Authorize" button.
-      $('#sign-in-or-out-button').click(function() {
-        this.handleAuthClick();
-      });
-      $('#revoke-access-button').click(function() {
-       // revokeAccess();
-      });
+
     });
   }
 
     start = ()=>{
-        gapi.load('client:auth2', this.initClient);
+    //gapi.client.load('helloworld', 'v1', callback, apiRoot);
+        gapi.load('client:auth2', 'v3', this.initClient, 'http://localhost:3000/');
+       // gapi.load('client:auth2', this.initClient);
        };
 
 
@@ -114,21 +101,16 @@ class App extends Component {
         }
 
      componentDidMount() {
-this.loadGApi();
-              this.setupCalendar($('.jquery-calendar'));
+          //this.start();
+        //  this.setupCalendar($('.jquery-calendar'));
        }
 
   render() {
 
     return (
       <div>
-        <button id="sign-in-or-out-button" onClick={this.handleAuthClick}
-                  >Sign In/Authorize</button>
-          <button id="revoke-access-button"
-                  >Revoke access</button>
+        <div id="" className="calendar jquery-calendar"></div>
 
-        <div className="calendar jquery-calendar">
-      </div>
 
       </div>
     );
