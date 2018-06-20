@@ -1,124 +1,124 @@
-import React, { Component } from 'react';
+import React, {
+    Component
+} from 'react';
 import fullCalendar from 'fullcalendar';
 import gapi from 'gapi-client';
-import logo from './logo.svg';
+import $ from 'jquery';
 import './App.css';
-import GoogleLogin from 'react-google-login';
-import Login from './Login';
-import {fetchJsonp} from 'fetch-jsonp'
+import {GapiConfig} from './constants'
+
+
 class App extends Component {
-
-
-
 
     constructor() {
         super();
         this.singinRef = React.createRef();
-      }
-
-
-
-    //AIzaSyAqT8wb3zioCk5FZ98lPwc0t4vbjB0ulSg
-    //125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com
-    //8Fv-n3K97EBvmHDxGROgLdnG
-    //ap[i key :AIzaSyD84HhDX3c1puWGieAqdklTvxOWpEQtd_c
-    setupCalendar = (calendar)=>{
-        calendar.fullCalendar({
-            editable: true,
-            firstDay: 1,
-            droppable: true,
-            drop(date) {
-            },
-            eventReceive(event) {
-            },
-            eventMouseover(event, jsEvent, view) {
-            },
-            eventMouseout(event, jsEvent, view) {
-            }
-          });
     }
 
-     updateSigninStatus=(isSignedIn)=> {
-//            if (isSignedIn) {
-//              authorizeButton.style.display = 'none';
-//              signoutButton.style.display = 'block';
-//              listUpcomingEvents();
-//            } else {
-//              authorizeButton.style.display = 'block';
-//            }
-          }
 
-         handleAuthClick() {
-                // Ideally the button should only show up after gapi.client.init finishes, so that this
-                // handler won't be called before OAuth is initialized.
-                gapi.auth2.getAuthInstance().signIn();
-              }
-  initClient= ()=> {
-    // Retrieve the discovery document for version 3 of Google Drive API.
-    // In practice, your app can retrieve one or more discovery documents.
-    var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    setupCalendar = (calendar) => {
+        calendar.fullCalendar({
+            defaultDate: '2018-06-12',
+            editable: true,
+            eventLimit: true
+        });
+    }
 
-    // Initialize the gapi.client object, which app uses to make API requests.
-    // Get API key and client ID from API Console.
-    // 'scope' field specifies space-delimited list of access scopes.
+    handleClientLoad = () => {
+        // Load the API's client and auth2 modules.
+        // Call the initClient function after the modules load.
+        gapi.load('client:auth2', this.initClient);
+    }
 
-    gapi.client.init({
-        'apiKey': 'AIzaSyD84HhDX3c1puWGieAqdklTvxOWpEQtd_c',
-        'discoveryDocs': [discoveryUrl],
-        'clientId': '125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com',
-        'scope': discoveryUrl
-    }).then(function () {
-     let  GoogleAuth = gapi.auth2.getAuthInstance();
-       if (GoogleAuth.isSignedIn.get()) {
-            // User is authorized and has clicked 'Sign out' button.
-            GoogleAuth.signOut();
-          } else {
-            // User is not signed in. Start Google auth flow.
-            GoogleAuth.signIn();
-          }
-      // Listen for sign-in state changes.
-     // GoogleAuth.isSignedIn.listen(updateSigninStatus);
+    handleAuthClick = (event) => {
+        gapi.auth2.getAuthInstance().signIn();
+        this.listUpcomingEvents();
+    }
 
-      // Handle initial sign-in state. (Determine if user is already signed in.)
-      var user = GoogleAuth.currentUser.get();
-      //setSigninStatus();
+    listUpcomingEvents = () => {
+        gapi.client.calendar.events.list({
+            'calendarId': 'primary',
+            'showDeleted': false,
+            'singleEvents': true,
+            'maxResults': 10,
+            'orderBy': 'startTime'
+        }).then(function(response) {
+            const result = response.result.items;
+            const source = result.map((item, index) => {
+                return {
+                    title: item.summary,
+                    start: item.start,
+                    end: item.end
+                }
+            });
+            $('#calendar').fullCalendar('addEventSource', source);
+        });
+    }
+    handleSignoutClick = (event) => {
+        gapi.auth2.getAuthInstance().signOut();
+    }
+    getScope = () => {
+        return 'https://www.googleapis.com/auth/calendar';
+    }
+    initClient = () => {
+        // Retrieve the discovery document for version 3 of Google Drive API.
+        // In practice, your app can retrieve one or more discovery documents.
+        // Initialize the gapi.client object, which app uses to make API requests.
+        // Get API key and client ID from API Console.
+        // 'scope' field specifies space-delimited list of access scopes.
+        gapi.client.init({
+            'apiKey': GapiConfig.apiKey,
+            'discoveryDocs': [GapiConfig.discoveryDocs],
+            'clientId': GapiConfig.clientId,
+            'scope': GapiConfig.scope
+        }).then(function() {
+            // Listen for sign-in state changes.
+            gapi.auth2.getAuthInstance().isSignedIn.listen(this.setSigninStatus);
+            // Handle the initial sign-in state.
+            this.setSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            $('#authorize-button').on("click", this.handleAuthClick);
+            //$('#signout-button').on("click",this.handleSignoutClick);
+        });
+    }
 
-      // Call handleAuthClick function when user clicks on
-      //      "Sign In/Authorize" button.
+    setSigninStatus = (isSignedIn) => {
+        var user = gapi.auth2.getAuthInstance().currentUser.get();
+        var isAuthorized = user.hasGrantedScopes(GapiConfig.scope);
+        if (isAuthorized) {
+            // $('#signout-button').css('display', 'block');
+            // $('#authorize-button').css('display', 'none');
+            this.listUpcomingEvents();
+        } else {
+            // $('#sign-in-or-out-button').html('Sign In/Authorize');
+            //  $('#signout-button').css('display', 'none');
+            // $('#authorize-button').css('display', 'block');
 
-    });
-  }
-
-    start = ()=>{
-    //gapi.client.load('helloworld', 'v1', callback, apiRoot);
-        gapi.load('client:auth2', 'v3', this.initClient, 'http://localhost:3000/');
-       // gapi.load('client:auth2', this.initClient);
-       };
-
-
-      responseGoogle = (response) => {
-          console.log(response);
         }
+    }
 
-     componentDidMount() {
-          //this.start();
-        //  this.setupCalendar($('.jquery-calendar'));
-       }
+    componentDidMount() {
+        this.setupCalendar($('.jquery-calendar'));
+        this.handleClientLoad();
+        //$('#authorize-button').css('display', 'none');
+    }
 
-  render() {
+    render() {
 
-    return (
-      <div>
-        <div id="" className="calendar jquery-calendar"></div>
+        return (
+           <div>
+              <div className="calendar google-auth-container">
+                   <div>
+                   <button className="google-auth google-dark right" >
+                     <span className="google-icon"></span>
+                     <span className="google-text">Sync Calendar</span>
+                   </button>
 
-
-      </div>
-    );
-  }
-
-
-
-
+                 </div>
+                </div>
+                <div  className="calendar jquery-calendar"></div>
+           </div>
+        );
+    }
 }
 
 export default App;

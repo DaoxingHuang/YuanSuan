@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="theme-color" content="#000000">
-
+    <!--
+      manifest.json provides metadata used when your web app is added to the
+      homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
+    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-    <!--<link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">-->
-    <link rel="stylesheet" href="%PUBLIC_URL%/buttons.min.css">
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.css"/>
 
     <!--
@@ -20,126 +21,22 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-
-
-    <title></title>
+    <title>React App</title>
   </head>
   <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
 
-     <div class="calendar" style="display:flow-root;border-bottom:1px solid #ccc!important;padding-bottom:5px;">
-       <div style="float:right">
-       <button id="authorize-button" class="google-auth google-dark">
-         <span class="google-icon"></span>
-         <span class="google-text">Sync Calendar</span>
-       </button>
-       <button id="signout-button" class="google-auth google-light" style="display:none">
-         <span class="google-icon"></span>
-         <span class="google-text">Sign ein with Googl</span>
-       </button>
-     </div>
-    </div>
-  <div style="backgroud-color:00000;height:2px"></div>
-    <div id="calendar" class="calendar"></div>
-    <div id="root" ></div>
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
   </body>
-  <script src="https://fullcalendar.io/releases/fullcalendar/3.9.0/lib/moment.min.js"></script>
-  <script src="https://fullcalendar.io/releases/fullcalendar/3.9.0/lib/jquery.min.js"></script>
-  <script src="https://fullcalendar.io/releases/fullcalendar/3.9.0/fullcalendar.min.js"></script>
-  <script src="https://apis.google.com/js/api.js"></script>
-  <script>
-
-   $(document).ready(function() {
-      $ = jQuery.noConflict(false);
-      $('#calendar').fullCalendar({
-          defaultDate: '2018-06-12',
-          editable: true,
-          eventLimit: true
-      });
-      handleClientLoad();
-  });
-
-  var SCOPE = 'https://www.googleapis.com/auth/calendar';
-
-  function handleClientLoad() {
-    // Load the API's client and auth2 modules.
-    // Call the initClient function after the modules load.
-    gapi.load('client:auth2', initClient);
-  }
-
-  function initClient() {
-    // Retrieve the discovery document for version 3 of Google Drive API.
-    // In practice, your app can retrieve one or more discovery documents.
-    var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    // Initialize the gapi.client object, which app uses to make API requests.
-    // Get API key and client ID from API Console.
-    // 'scope' field specifies space-delimited list of access scopes.
-    gapi.client.init({
-        'apiKey': 'AIzaSyD84HhDX3c1puWGieAqdklTvxOWpEQtd_c',
-        'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-        'clientId': '125993358695-4ro88rom7846k3bo290juotlskvn1n4g.apps.googleusercontent.com',
-        'scope': SCOPE
-    }).then(function () {
-      // Listen for sign-in state changes.
-       gapi.auth2.getAuthInstance().isSignedIn.listen(setSigninStatus);
-      // Handle the initial sign-in state.
-       setSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-        $('#authorize-button').on("click",handleAuthClick);
-        $('#signout-button').on("click",handleSignoutClick);
-      });
-  }
-
-    function handleAuthClick(event) {
-        gapi.auth2.getAuthInstance().signIn();
-        listUpcomingEvents();
-      }
-
-
-    function handleSignoutClick(event) {
-        gapi.auth2.getAuthInstance().signOut();
-      }
-
-   function listUpcomingEvents() {
-        gapi.client.calendar.events.list({
-          'calendarId': 'primary',
-          'showDeleted': false,
-          'singleEvents': true,
-          'maxResults': 10,
-          'orderBy': 'startTime'
-        }).then(function(response) {
-          var result = response.result.items;
-          var source = result.map((item,index)=>{
-               return {title:item.summary,
-                start:item.start,
-                end:item.end}
-          });
-          $('#calendar').fullCalendar('addEventSource', source);
-           <!--$('#calendar').fullCalendar({-->
-            <!--defaultDate: '2018-06-12',-->
-            <!--editable: true,-->
-            <!--eventLimit: true, // allow "more" link when too many events-->
-            <!--events:result.map((item,index)=>{-->
-                <!--return {title:item.summary,-->
-                <!--start:item.start,-->
-                <!--end:item.end}})-->
-          <!--})-->
-        });
-    }
-
-  function setSigninStatus(isSignedIn) {
-    var user = gapi.auth2.getAuthInstance().currentUser.get();
-    var isAuthorized = user.hasGrantedScopes(SCOPE);
-    if (isAuthorized) {
-      $('#signout-button').css('display', 'block');
-      $('#authorize-button').css('display', 'none');
-      listUpcomingEvents();
-    } else {
-     // $('#sign-in-or-out-button').html('Sign In/Authorize');
-       $('#signout-button').css('display', 'none');
-       $('#authorize-button').css('display', 'block');
-
-    }
-  }
-
-</script>
-
 </html>

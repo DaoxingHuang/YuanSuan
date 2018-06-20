@@ -100,3 +100,12 @@ button.google-auth{
     max-width:200px;
 }
 
+.google-auth-container{
+    display:flow-root;
+    border-bottom:1px solid #ccc!important;
+    padding-bottom:5px;
+}
+
+.right{
+  float:right;
+}
